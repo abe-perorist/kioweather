@@ -9,23 +9,20 @@ const TempChart = dynamic(() => import("./components/TempChart"), {
 
 type HourData = { hour: string; temp: number; feels: number };
 type WeatherData = { today: HourData[]; yesterday: HourData[] };
-type Schedule = { label: string; time: string }; // time: "HH:00"
+type Times = { morning: string; evening: string };
 
-const DEFAULT_SCHEDULES: Schedule[] = [
-  { label: "朝の外出", time: "08:00" },
-  { label: "夜の帰宅", time: "19:00" },
-];
+const DEFAULT_TIMES: Times = { morning: "08:00", evening: "19:00" };
 
-function loadSchedules(): Schedule[] {
+function loadTimes(): Times {
   try {
-    const raw = localStorage.getItem("kioweather_schedules");
+    const raw = localStorage.getItem("kioweather_times");
     if (raw) return JSON.parse(raw);
   } catch {}
-  return DEFAULT_SCHEDULES;
+  return DEFAULT_TIMES;
 }
 
-function saveSchedules(schedules: Schedule[]) {
-  localStorage.setItem("kioweather_schedules", JSON.stringify(schedules));
+function saveTimes(times: Times) {
+  localStorage.setItem("kioweather_times", JSON.stringify(times));
 }
 
 function getTempAt(data: HourData[], time: string): number | null {
@@ -33,87 +30,158 @@ function getTempAt(data: HourData[], time: string): number | null {
   return entry ? entry.feels : null;
 }
 
-function getDiffAdvice(diff: number): string {
-  if (diff <= -5) return "かなり寒い。しっかり厚着を";
-  if (diff <= -2) return "昨日より寒い。1枚追加を";
-  if (diff >= 5) return "かなり暖かい。1枚減らして";
-  if (diff >= 2) return "昨日より暖かい。少し薄めでOK";
-  return "昨日と同じ服装でOK";
-}
-
-function TimeSlotCard({
-  schedule,
+function MorningCard({
+  times,
   today,
   yesterday,
 }: {
-  schedule: Schedule;
+  times: Times;
   today: HourData[];
   yesterday: HourData[];
 }) {
-  const todayTemp = getTempAt(today, schedule.time);
-  const yestTemp = getTempAt(yesterday, schedule.time);
+  const todayTemp = getTempAt(today, times.morning);
+  const yestTemp = getTempAt(yesterday, times.morning);
 
   if (todayTemp === null || yestTemp === null) return null;
 
   const diff = Math.round((todayTemp - yestTemp) * 10) / 10;
-  const advice = getDiffAdvice(diff);
 
-  const diffColor =
-    diff <= -2
-      ? "text-blue-600"
-      : diff >= 2
-        ? "text-orange-500"
-        : "text-gray-500";
+  let advice: string;
+  let badge: string;
+  let badgeColor: string;
+
+  if (diff <= -5) {
+    advice = "昨日よりかなり寒い。しっかり厚着を";
+    badge = "厚着推奨";
+    badgeColor = "bg-blue-100 text-blue-700";
+  } else if (diff <= -2) {
+    advice = "昨日より寒い。1枚追加して";
+    badge = "1枚追加";
+    badgeColor = "bg-blue-100 text-blue-700";
+  } else if (diff >= 5) {
+    advice = "昨日よりかなり暖かい。薄めでOK";
+    badge = "薄着でOK";
+    badgeColor = "bg-orange-100 text-orange-700";
+  } else if (diff >= 2) {
+    advice = "昨日より暖かい。少し薄めでもいいかも";
+    badge = "少し薄め";
+    badgeColor = "bg-orange-100 text-orange-700";
+  } else {
+    advice = "昨日とほぼ同じ。昨日の服装でOK";
+    badge = "昨日と同じ";
+    badgeColor = "bg-gray-100 text-gray-600";
+  }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-gray-700">{schedule.label}</span>
-        <span className="text-xs text-gray-400">{schedule.time}</span>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-xs text-gray-400 mb-0.5">朝の外出</p>
+          <p className="text-sm font-medium text-gray-700">{times.morning}</p>
+        </div>
+        <span className={`text-xs font-medium px-3 py-1 rounded-full ${badgeColor}`}>
+          {badge}
+        </span>
       </div>
-      <div className="flex items-end gap-3 mb-2">
+      <div className="flex items-end gap-4 mb-4">
         <div>
-          <p className="text-xs text-gray-400">今日</p>
-          <p className="text-2xl font-bold text-orange-500">{todayTemp}°</p>
+          <p className="text-xs text-gray-400 mb-1">今日</p>
+          <p className="text-3xl font-bold text-orange-500">{todayTemp}°</p>
         </div>
-        <div className="pb-1 text-gray-300">/</div>
+        <div className="pb-1 text-gray-200 text-2xl">/</div>
         <div>
-          <p className="text-xs text-gray-400">昨日</p>
-          <p className="text-2xl font-bold text-slate-400">{yestTemp}°</p>
+          <p className="text-xs text-gray-400 mb-1">昨日</p>
+          <p className="text-3xl font-bold text-slate-300">{yestTemp}°</p>
         </div>
-        <div className={`pb-1 text-sm font-medium ${diffColor}`}>
+        <p className={`pb-1 text-base font-semibold ${diff < 0 ? "text-blue-500" : diff > 0 ? "text-orange-500" : "text-gray-400"}`}>
           {diff > 0 ? `+${diff}°` : `${diff}°`}
-        </div>
+        </p>
       </div>
-      <p className="text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-1.5">
+      <p className="text-sm text-gray-600 bg-gray-50 rounded-xl px-4 py-2.5">
         {advice}
       </p>
     </div>
   );
 }
 
-function ScheduleEditor({
-  schedules,
+function EveningCard({
+  times,
+  today,
+}: {
+  times: Times;
+  today: HourData[];
+}) {
+  const morningTemp = getTempAt(today, times.morning);
+  const eveningTemp = getTempAt(today, times.evening);
+
+  if (morningTemp === null || eveningTemp === null) return null;
+
+  const diff = Math.round((eveningTemp - morningTemp) * 10) / 10;
+
+  let advice: string;
+  let badge: string;
+  let badgeColor: string;
+
+  if (diff <= -5) {
+    advice = "夜は朝よりかなり冷える。羽織りをバッグに入れて";
+    badge = "羽織り必須";
+    badgeColor = "bg-blue-100 text-blue-700";
+  } else if (diff <= -2) {
+    advice = "夜は少し冷える。薄手の羽織りをバッグに";
+    badge = "羽織り推奨";
+    badgeColor = "bg-blue-100 text-blue-700";
+  } else if (diff >= 3) {
+    advice = "夜の方が暖かい。朝の服装で問題なし";
+    badge = "朝のままでOK";
+    badgeColor = "bg-orange-100 text-orange-700";
+  } else {
+    advice = "朝と夜でほぼ変わらない。そのままでOK";
+    badge = "そのままでOK";
+    badgeColor = "bg-gray-100 text-gray-600";
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-xs text-gray-400 mb-0.5">夜の帰宅</p>
+          <p className="text-sm font-medium text-gray-700">{times.evening}</p>
+        </div>
+        <span className={`text-xs font-medium px-3 py-1 rounded-full ${badgeColor}`}>
+          {badge}
+        </span>
+      </div>
+      <div className="flex items-end gap-4 mb-4">
+        <div>
+          <p className="text-xs text-gray-400 mb-1">夜</p>
+          <p className="text-3xl font-bold text-slate-500">{eveningTemp}°</p>
+        </div>
+        <div className="pb-1 text-gray-200 text-2xl">/</div>
+        <div>
+          <p className="text-xs text-gray-400 mb-1">朝</p>
+          <p className="text-3xl font-bold text-orange-300">{morningTemp}°</p>
+        </div>
+        <p className={`pb-1 text-base font-semibold ${diff < 0 ? "text-blue-500" : diff > 0 ? "text-orange-500" : "text-gray-400"}`}>
+          {diff > 0 ? `+${diff}°` : `${diff}°`}
+        </p>
+      </div>
+      <p className="text-sm text-gray-600 bg-gray-50 rounded-xl px-4 py-2.5">
+        {advice}
+      </p>
+    </div>
+  );
+}
+
+function TimeEditor({
+  times,
   onChange,
   onClose,
 }: {
-  schedules: Schedule[];
-  onChange: (s: Schedule[]) => void;
+  times: Times;
+  onChange: (t: Times) => void;
   onClose: () => void;
 }) {
-  const [draft, setDraft] = useState<Schedule[]>(schedules);
-
-  const update = (i: number, field: keyof Schedule, value: string) => {
-    setDraft((prev) =>
-      prev.map((s, idx) => (idx === i ? { ...s, [field]: value } : s))
-    );
-  };
-
-  const add = () =>
-    setDraft((prev) => [...prev, { label: "外出", time: "12:00" }]);
-
-  const remove = (i: number) =>
-    setDraft((prev) => prev.filter((_, idx) => idx !== i));
+  const [draft, setDraft] = useState<Times>(times);
 
   const save = () => {
     onChange(draft);
@@ -123,38 +191,34 @@ function ScheduleEditor({
   return (
     <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50">
       <div className="bg-white w-full max-w-xl rounded-t-2xl p-6">
-        <h2 className="text-lg font-bold text-gray-800 mb-4">外出時間帯の設定</h2>
-        <div className="space-y-3 mb-4">
-          {draft.map((s, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <input
-                type="text"
-                value={s.label}
-                onChange={(e) => update(i, "label", e.target.value)}
-                placeholder="ラベル"
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400"
-              />
-              <input
-                type="time"
-                value={s.time}
-                onChange={(e) => update(i, "time", e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800"
-              />
-              <button
-                onClick={() => remove(i)}
-                className="text-gray-400 hover:text-red-400 text-lg leading-none"
-              >
-                ×
-              </button>
+        <h2 className="text-lg font-bold text-gray-800 mb-6">時間帯の設定</h2>
+        <div className="space-y-4 mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-700">朝の外出</p>
+              <p className="text-xs text-gray-400 mt-0.5">昨日と比べて何を着るかの判断に使います</p>
             </div>
-          ))}
+            <input
+              type="time"
+              value={draft.morning}
+              onChange={(e) => setDraft((p) => ({ ...p, morning: e.target.value }))}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800"
+            />
+          </div>
+          <div className="h-px bg-gray-100" />
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-700">夜の帰宅</p>
+              <p className="text-xs text-gray-400 mt-0.5">朝と比べて羽織りが必要かの判断に使います</p>
+            </div>
+            <input
+              type="time"
+              value={draft.evening}
+              onChange={(e) => setDraft((p) => ({ ...p, evening: e.target.value }))}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800"
+            />
+          </div>
         </div>
-        <button
-          onClick={add}
-          className="text-sm text-gray-400 hover:text-gray-600 mb-6 block"
-        >
-          + 追加
-        </button>
         <div className="flex gap-3">
           <button
             onClick={onClose}
@@ -174,22 +238,15 @@ function ScheduleEditor({
   );
 }
 
-function getTempDiff(today: HourData[], yesterday: HourData[]): number | null {
-  const todayAvg = today.reduce((s, d) => s + d.temp, 0) / (today.length || 1);
-  const yestAvg =
-    yesterday.reduce((s, d) => s + d.temp, 0) / (yesterday.length || 1);
-  return Math.round((todayAvg - yestAvg) * 10) / 10;
-}
-
 export default function Page() {
   const [data, setData] = useState<WeatherData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [schedules, setSchedules] = useState<Schedule[]>(DEFAULT_SCHEDULES);
+  const [times, setTimes] = useState<Times>(DEFAULT_TIMES);
   const [showEditor, setShowEditor] = useState(false);
 
   useEffect(() => {
-    setSchedules(loadSchedules());
+    setTimes(loadTimes());
   }, []);
 
   useEffect(() => {
@@ -207,26 +264,17 @@ export default function Page() {
         setLoading(false);
       },
       () => {
-        setError(
-          "位置情報を取得できませんでした。ブラウザの許可設定を確認してください。"
-        );
+        setError("位置情報を取得できませんでした。ブラウザの許可設定を確認してください。");
         setLoading(false);
       }
     );
   }, []);
-
-  const handleSaveSchedules = (s: Schedule[]) => {
-    setSchedules(s);
-    saveSchedules(s);
-  };
 
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
   const fmt = (d: Date) =>
     `${d.getMonth() + 1}/${d.getDate()}(${["日", "月", "火", "水", "木", "金", "土"][d.getDay()]})`;
-
-  const diff = data ? getTempDiff(data.today, data.yesterday) : null;
 
   return (
     <main className="min-h-screen bg-gray-50 flex flex-col items-center px-4 py-8">
@@ -246,24 +294,9 @@ export default function Page() {
 
         {loading && (
           <div className="flex items-center justify-center py-20 text-gray-400">
-            <svg
-              className="animate-spin h-6 w-6 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v8z"
-              />
+            <svg className="animate-spin h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
             </svg>
             気象データを取得中...
           </div>
@@ -277,19 +310,11 @@ export default function Page() {
 
         {data && (
           <>
-            {/* 外出時間帯サマリー */}
             <div className="space-y-3 mb-6">
-              {schedules.map((s, i) => (
-                <TimeSlotCard
-                  key={i}
-                  schedule={s}
-                  today={data.today}
-                  yesterday={data.yesterday}
-                />
-              ))}
+              <MorningCard times={times} today={data.today} yesterday={data.yesterday} />
+              <EveningCard times={times} today={data.today} />
             </div>
 
-            {/* グラフ */}
             <div className="flex items-center gap-4 mb-3 text-sm text-gray-500">
               <span className="flex items-center gap-1.5">
                 <span className="inline-block w-4 h-0.5 bg-orange-400 rounded" />
@@ -299,13 +324,6 @@ export default function Page() {
                 <span className="inline-block w-4 h-0.5 bg-slate-400 rounded" />
                 昨日 {fmt(yesterday)}
               </span>
-              {diff !== null && (
-                <span
-                  className={`ml-auto text-xs font-medium ${diff <= -1 ? "text-blue-500" : diff >= 1 ? "text-orange-500" : "text-gray-400"}`}
-                >
-                  日平均 {diff > 0 ? `+${diff}` : diff}°C
-                </span>
-              )}
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
@@ -319,9 +337,9 @@ export default function Page() {
       </div>
 
       {showEditor && (
-        <ScheduleEditor
-          schedules={schedules}
-          onChange={handleSaveSchedules}
+        <TimeEditor
+          times={times}
+          onChange={(t) => { setTimes(t); saveTimes(t); }}
           onClose={() => setShowEditor(false)}
         />
       )}
