@@ -132,13 +132,13 @@ function ScheduleEditor({
                 value={s.label}
                 onChange={(e) => update(i, "label", e.target.value)}
                 placeholder="ラベル"
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400"
               />
               <input
                 type="time"
                 value={s.time}
                 onChange={(e) => update(i, "time", e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800"
               />
               <button
                 onClick={() => remove(i)}
