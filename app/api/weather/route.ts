@@ -20,11 +20,9 @@ export async function GET(req: NextRequest) {
     `https://api.open-meteo.com/v1/forecast?` +
     `latitude=${lat}&longitude=${lon}` +
     `&hourly=temperature_2m,apparent_temperature` +
-    `&daily=temperature_2m_max,temperature_2m_min` +
     `&past_days=1` +
     `&forecast_days=1` +
-    `&timezone=Asia%2FTokyo` +
-    `&start_date=${fmt(yesterday)}&end_date=${fmt(today)}`;
+    `&timezone=Asia%2FTokyo`;
 
   const res = await fetch(url, { next: { revalidate: 1800 } });
   if (!res.ok) {
