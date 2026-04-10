@@ -16,20 +16,17 @@ type HourData = { hour: string; temp: number; feels: number };
 type Props = {
   today: HourData[];
   yesterday: HourData[];
+  todayColor: string;
 };
 
-export default function TempChart({ today, yesterday }: Props) {
-  // 時刻でマージ（グラフ用）
+export default function TempChart({ today, yesterday, todayColor }: Props) {
   const data = today.map((t, i) => ({
     hour: t.hour,
-    今日: t.temp,
-    今日体感: t.feels,
-    昨日: yesterday[i]?.temp ?? null,
-    昨日体感: yesterday[i]?.feels ?? null,
+    今日: t.feels,
+    昨日: yesterday[i]?.feels ?? null,
   }));
 
-  // 表示範囲を最低・最高から余裕を持たせる
-  const allTemps = [...today, ...yesterday].flatMap((d) => [d.temp, d.feels]);
+  const allTemps = [...today, ...yesterday].map((d) => d.feels);
   const minTemp = Math.floor(Math.min(...allTemps)) - 2;
   const maxTemp = Math.ceil(Math.max(...allTemps)) + 2;
 
@@ -57,22 +54,6 @@ export default function TempChart({ today, yesterday }: Props) {
         <Legend />
         <Line
           type="monotone"
-          dataKey="今日"
-          stroke="#f97316"
-          strokeWidth={2.5}
-          dot={false}
-          activeDot={{ r: 4 }}
-        />
-        <Line
-          type="monotone"
-          dataKey="今日体感"
-          stroke="#f97316"
-          strokeWidth={1.5}
-          strokeDasharray="4 2"
-          dot={false}
-        />
-        <Line
-          type="monotone"
           dataKey="昨日"
           stroke="#94a3b8"
           strokeWidth={2}
@@ -81,11 +62,11 @@ export default function TempChart({ today, yesterday }: Props) {
         />
         <Line
           type="monotone"
-          dataKey="昨日体感"
-          stroke="#94a3b8"
-          strokeWidth={1.5}
-          strokeDasharray="4 2"
+          dataKey="今日"
+          stroke={todayColor}
+          strokeWidth={2.5}
           dot={false}
+          activeDot={{ r: 4 }}
         />
       </LineChart>
     </ResponsiveContainer>

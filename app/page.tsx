@@ -14,6 +14,17 @@ type Times = { morning: string; evening: string };
 
 const DEFAULT_TIMES: Times = { morning: "08:00", evening: "19:00" };
 
+// 今日が昨日より暖かいかを朝の体感温度で判定
+const TODAY_WARM_COLOR = "#f97316";  // orange-500
+const TODAY_COOL_COLOR = "#3b82f6";  // blue-500
+const TODAY_NEUTRAL_COLOR = "#f97316";
+
+function getTodayColor(diff: number): string {
+  if (diff > 0) return TODAY_WARM_COLOR;
+  if (diff < 0) return TODAY_COOL_COLOR;
+  return TODAY_NEUTRAL_COLOR;
+}
+
 function loadTimes(): Times {
   try {
     const raw = localStorage.getItem("kioweather_times");
@@ -35,10 +46,12 @@ function MorningCard({
   times,
   today,
   yesterday,
+  todayColor,
 }: {
   times: Times;
   today: HourData[];
   yesterday: HourData[];
+  todayColor: string;
 }) {
   const todayTemp = getTempAt(today, times.morning);
   const yestTemp = getTempAt(yesterday, times.morning);
@@ -87,7 +100,7 @@ function MorningCard({
       <div className="flex items-end gap-4 mb-4">
         <div>
           <p className="text-xs text-gray-400 mb-1">今日</p>
-          <p className="text-3xl font-bold text-orange-500">{todayTemp}°</p>
+          <p className="text-3xl font-bold" style={{ color: todayColor }}>{todayTemp}°</p>
         </div>
         <div className="pb-1 text-gray-200 text-2xl">/</div>
         <div>
@@ -108,9 +121,11 @@ function MorningCard({
 function EveningCard({
   times,
   today,
+  todayColor,
 }: {
   times: Times;
   today: HourData[];
+  todayColor: string;
 }) {
   const morningTemp = getTempAt(today, times.morning);
   const eveningTemp = getTempAt(today, times.evening);
@@ -155,12 +170,12 @@ function EveningCard({
       <div className="flex items-end gap-4 mb-4">
         <div>
           <p className="text-xs text-gray-400 mb-1">夜</p>
-          <p className="text-3xl font-bold text-slate-500">{eveningTemp}°</p>
+          <p className="text-3xl font-bold" style={{ color: todayColor }}>{eveningTemp}°</p>
         </div>
         <div className="pb-1 text-gray-200 text-2xl">/</div>
         <div>
           <p className="text-xs text-gray-400 mb-1">朝</p>
-          <p className="text-3xl font-bold text-orange-300">{morningTemp}°</p>
+          <p className="text-3xl font-bold text-slate-300">{morningTemp}°</p>
         </div>
         <p className={`pb-1 text-base font-semibold ${diff < 0 ? "text-blue-500" : diff > 0 ? "text-orange-500" : "text-gray-400"}`}>
           {diff > 0 ? `+${diff}°` : `${diff}°`}
@@ -277,6 +292,16 @@ export default function Page() {
   const fmt = (d: Date) =>
     `${d.getMonth() + 1}/${d.getDate()}(${["日", "月", "火", "水", "木", "金", "土"][d.getDay()]})`;
 
+  // 朝の体感温度差で今日のテーマカラーを決定
+  const morningDiff = data
+    ? (() => {
+        const t = data.today.find((d) => d.hour === times.morning)?.feels ?? null;
+        const y = data.yesterday.find((d) => d.hour === times.morning)?.feels ?? null;
+        return t !== null && y !== null ? t - y : 0;
+      })()
+    : 0;
+  const todayColor = getTodayColor(morningDiff);
+
   return (
     <main className="min-h-screen bg-gray-50 flex flex-col items-center px-4 py-8">
       <div className="w-full max-w-xl">
@@ -312,13 +337,13 @@ export default function Page() {
         {data && (
           <>
             <div className="space-y-3 mb-6">
-              <MorningCard times={times} today={data.today} yesterday={data.yesterday} />
-              <EveningCard times={times} today={data.today} />
+              <MorningCard times={times} today={data.today} yesterday={data.yesterday} todayColor={todayColor} />
+              <EveningCard times={times} today={data.today} todayColor={todayColor} />
             </div>
 
             <div className="flex items-center gap-4 mb-3 text-sm text-gray-500">
               <span className="flex items-center gap-1.5">
-                <span className="inline-block w-4 h-0.5 bg-orange-400 rounded" />
+                <span className="inline-block w-4 h-0.5 rounded" style={{ backgroundColor: todayColor }} />
                 今日 {fmt(today)}
               </span>
               <span className="flex items-center gap-1.5">
@@ -328,9 +353,9 @@ export default function Page() {
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-              <TempChart today={data.today} yesterday={data.yesterday} />
+              <TempChart today={data.today} yesterday={data.yesterday} todayColor={todayColor} />
               <p className="text-xs text-gray-400 mt-2 text-center">
-                破線 = 体感温度 / 実線 = 気温
+                体感温度の時間変化
               </p>
             </div>
           </>
