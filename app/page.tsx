@@ -330,7 +330,7 @@ export default function Page() {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
               <TempChart today={data.today} yesterday={data.yesterday} />
               <p className="text-xs text-gray-400 mt-2 text-center">
-                破線 = 体感温度 / 実線 = 気温
+                体感温度の時間変化
               </p>
             </div>
           </>
