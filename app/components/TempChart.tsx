@@ -7,7 +7,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
@@ -25,7 +24,7 @@ type Props = {
 function EmojiLabel({ viewBox, emoji }: { viewBox?: { x: number; y: number }; emoji: string }) {
   if (!viewBox) return null;
   return (
-    <text x={viewBox.x} y={viewBox.y - 4} textAnchor="middle" fontSize={16}>
+    <text x={viewBox.x} y={viewBox.y + 20} textAnchor="middle" fontSize={16}>
       {emoji}
     </text>
   );
@@ -63,7 +62,6 @@ export default function TempChart({ today, yesterday, todayColor, times }: Props
           formatter={(value, name) => [`${value}°C`, name as string]}
           labelFormatter={(label) => `${label}`}
         />
-        <Legend />
         <ReferenceLine
           x={times.morning}
           stroke="#9ca3af"
