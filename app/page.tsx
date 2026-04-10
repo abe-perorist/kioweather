@@ -77,7 +77,7 @@ function MorningCard({
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       <div className="mb-4">
-        <p className="text-xs text-gray-400 mb-0.5">朝の外出</p>
+        <p className="text-xs text-gray-400 mb-0.5">🌅 朝の外出</p>
         <p className="text-sm font-medium text-gray-700">{times.morning}</p>
       </div>
       <div className="flex items-end gap-4 mb-4">
@@ -136,7 +136,7 @@ function EveningCard({
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       <div className="mb-4">
-        <p className="text-xs text-gray-400 mb-0.5">夜の帰宅</p>
+        <p className="text-xs text-gray-400 mb-0.5">🌙 夜の帰宅</p>
         <p className="text-sm font-medium text-gray-700">{times.evening}</p>
       </div>
       <div className="flex items-end gap-4 mb-4">

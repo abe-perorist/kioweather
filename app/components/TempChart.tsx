@@ -22,6 +22,15 @@ type Props = {
   times: Times;
 };
 
+function EmojiLabel({ viewBox, emoji }: { viewBox?: { x: number; y: number }; emoji: string }) {
+  if (!viewBox) return null;
+  return (
+    <text x={viewBox.x} y={viewBox.y - 4} textAnchor="middle" fontSize={16}>
+      {emoji}
+    </text>
+  );
+}
+
 export default function TempChart({ today, yesterday, todayColor, times }: Props) {
   const data = today.map((t, i) => ({
     hour: t.hour,
@@ -59,13 +68,13 @@ export default function TempChart({ today, yesterday, todayColor, times }: Props
           x={times.morning}
           stroke="#9ca3af"
           strokeDasharray="4 2"
-          label={{ value: "朝", position: "top", fontSize: 11, fill: "#9ca3af" }}
+          label={(props) => <EmojiLabel {...props} emoji="🌅" />}
         />
         <ReferenceLine
           x={times.evening}
           stroke="#9ca3af"
           strokeDasharray="4 2"
-          label={{ value: "夜", position: "top", fontSize: 11, fill: "#9ca3af" }}
+          label={(props) => <EmojiLabel {...props} emoji="🌙" />}
         />
         <Line
           type="monotone"
