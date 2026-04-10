@@ -61,41 +61,24 @@ function MorningCard({
   const diff = Math.round((todayTemp - yestTemp) * 10) / 10;
 
   let advice: string;
-  let badge: string;
-  let badgeColor: string;
 
   if (diff <= -5) {
     advice = "昨日よりかなり寒い。しっかり厚着を";
-    badge = "厚着推奨";
-    badgeColor = "bg-blue-100 text-blue-700";
   } else if (diff <= -2) {
     advice = "昨日より寒い。1枚追加して";
-    badge = "1枚追加";
-    badgeColor = "bg-blue-100 text-blue-700";
   } else if (diff >= 5) {
     advice = "昨日よりかなり暖かい。薄めでOK";
-    badge = "薄着でOK";
-    badgeColor = "bg-orange-100 text-orange-700";
   } else if (diff >= 2) {
     advice = "昨日より暖かい。少し薄めでもいいかも";
-    badge = "少し薄め";
-    badgeColor = "bg-orange-100 text-orange-700";
   } else {
     advice = "昨日とほぼ同じ。昨日の服装でOK";
-    badge = "昨日と同じ";
-    badgeColor = "bg-gray-100 text-gray-600";
   }
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <p className="text-xs text-gray-400 mb-0.5">朝の外出</p>
-          <p className="text-sm font-medium text-gray-700">{times.morning}</p>
-        </div>
-        <span className={`text-xs font-medium px-3 py-1 rounded-full ${badgeColor}`}>
-          {badge}
-        </span>
+      <div className="mb-4">
+        <p className="text-xs text-gray-400 mb-0.5">朝の外出</p>
+        <p className="text-sm font-medium text-gray-700">{times.morning}</p>
       </div>
       <div className="flex items-end gap-4 mb-4">
         <div>
@@ -135,37 +118,22 @@ function EveningCard({
   const diff = Math.round((eveningTemp - morningTemp) * 10) / 10;
 
   let advice: string;
-  let badge: string;
-  let badgeColor: string;
 
   if (diff <= -5) {
     advice = "夜は朝よりかなり冷える。羽織りをバッグに入れて";
-    badge = "羽織り必須";
-    badgeColor = "bg-blue-100 text-blue-700";
   } else if (diff <= -2) {
     advice = "夜は少し冷える。薄手の羽織りをバッグに";
-    badge = "羽織り推奨";
-    badgeColor = "bg-blue-100 text-blue-700";
   } else if (diff >= 3) {
     advice = "夜の方が暖かい。朝の服装で問題なし";
-    badge = "朝のままでOK";
-    badgeColor = "bg-orange-100 text-orange-700";
   } else {
     advice = "朝と夜でほぼ変わらない。そのままでOK";
-    badge = "そのままでOK";
-    badgeColor = "bg-gray-100 text-gray-600";
   }
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <p className="text-xs text-gray-400 mb-0.5">夜の帰宅</p>
-          <p className="text-sm font-medium text-gray-700">{times.evening}</p>
-        </div>
-        <span className={`text-xs font-medium px-3 py-1 rounded-full ${badgeColor}`}>
-          {badge}
-        </span>
+      <div className="mb-4">
+        <p className="text-xs text-gray-400 mb-0.5">夜の帰宅</p>
+        <p className="text-sm font-medium text-gray-700">{times.evening}</p>
       </div>
       <div className="flex items-end gap-4 mb-4">
         <div>
