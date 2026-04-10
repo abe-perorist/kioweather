@@ -24,7 +24,7 @@ type Props = {
 function EmojiLabel({ viewBox, emoji }: { viewBox?: { x: number; y: number }; emoji: string }) {
   if (!viewBox) return null;
   return (
-    <text x={viewBox.x} y={viewBox.y + 20} textAnchor="middle" fontSize={16}>
+    <text x={viewBox.x} y={viewBox.y - 6} textAnchor="middle" fontSize={16}>
       {emoji}
     </text>
   );
@@ -43,7 +43,7 @@ export default function TempChart({ today, yesterday, todayColor, times }: Props
 
   return (
     <ResponsiveContainer width="100%" height={320}>
-      <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+      <LineChart data={data} margin={{ top: 32, right: 16, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
         <XAxis
           dataKey="hour"
