@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 
 const TempChart = dynamic(() => import("./components/TempChart"), {
   ssr: false,
@@ -343,6 +344,11 @@ export default function Page() {
           onClose={() => setShowEditor(false)}
         />
       )}
+
+      <footer className="w-full max-w-xl mt-10 pb-4 flex gap-4 justify-center text-xs text-gray-400">
+        <Link href="/terms" className="hover:text-gray-600">利用規約</Link>
+        <Link href="/privacy" className="hover:text-gray-600">プライバシーポリシー</Link>
+      </footer>
     </main>
   );
 }
