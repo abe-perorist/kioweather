@@ -104,29 +104,33 @@ function MorningCard({
 function EveningCard({
   times,
   today,
+  yesterday,
   todayColor,
 }: {
   times: Times;
   today: HourData[];
+  yesterday: HourData[];
   todayColor: string;
 }) {
-  const morningTemp = getTempAt(today, times.morning);
-  const eveningTemp = getTempAt(today, times.evening);
+  const todayTemp = getTempAt(today, times.evening);
+  const yestTemp = getTempAt(yesterday, times.evening);
 
-  if (morningTemp === null || eveningTemp === null) return null;
+  if (todayTemp === null || yestTemp === null) return null;
 
-  const diff = Math.round((eveningTemp - morningTemp) * 10) / 10;
+  const diff = Math.round((todayTemp - yestTemp) * 10) / 10;
 
   let advice: string;
 
   if (diff <= -5) {
-    advice = "夜は朝よりかなり冷える。羽織りをバッグに入れて";
+    advice = "昨日の夜よりかなり寒い。しっかり厚着を";
   } else if (diff <= -2) {
-    advice = "夜は少し冷える。薄手の羽織りをバッグに";
-  } else if (diff >= 3) {
-    advice = "夜の方が暖かい。朝の服装で問題なし";
+    advice = "昨日の夜より寒い。1枚追加して";
+  } else if (diff >= 5) {
+    advice = "昨日の夜よりかなり暖かい。薄めでOK";
+  } else if (diff >= 2) {
+    advice = "昨日の夜より暖かい。少し薄めでもいいかも";
   } else {
-    advice = "朝と夜でほぼ変わらない。そのままでOK";
+    advice = "昨日の夜とほぼ同じ。昨日の服装でOK";
   }
 
   return (
@@ -137,13 +141,13 @@ function EveningCard({
       </div>
       <div className="flex items-end gap-4 mb-4">
         <div>
-          <p className="text-xs text-gray-400 mb-1">夜</p>
-          <p className="text-3xl font-bold" style={{ color: todayColor }}>{eveningTemp}°</p>
+          <p className="text-xs text-gray-400 mb-1">今日</p>
+          <p className="text-3xl font-bold" style={{ color: todayColor }}>{todayTemp}°</p>
         </div>
         <div className="pb-1 text-gray-200 text-2xl">/</div>
         <div>
-          <p className="text-xs text-gray-400 mb-1">朝</p>
-          <p className="text-3xl font-bold text-slate-300">{morningTemp}°</p>
+          <p className="text-xs text-gray-400 mb-1">昨日</p>
+          <p className="text-3xl font-bold text-slate-300">{yestTemp}°</p>
         </div>
         <p className={`pb-1 text-base font-semibold ${diff < 0 ? "text-blue-500" : diff > 0 ? "text-orange-500" : "text-gray-400"}`}>
           {diff > 0 ? `+${diff}°` : `${diff}°`}
@@ -306,7 +310,7 @@ export default function Page() {
           <>
             <div className="space-y-3 mb-6">
               <MorningCard times={times} today={data.today} yesterday={data.yesterday} todayColor={todayColor} />
-              <EveningCard times={times} today={data.today} todayColor={todayColor} />
+              <EveningCard times={times} today={data.today} yesterday={data.yesterday} todayColor={todayColor} />
             </div>
 
             <div className="flex items-center gap-4 mb-3 text-sm text-gray-500">
@@ -321,7 +325,7 @@ export default function Page() {
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-              <TempChart today={data.today} yesterday={data.yesterday} todayColor={todayColor} />
+              <TempChart today={data.today} yesterday={data.yesterday} todayColor={todayColor} times={times} />
               <p className="text-xs text-gray-400 mt-2 text-center">
                 体感温度の時間変化
               </p>

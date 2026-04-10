@@ -8,18 +8,21 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
 
 type HourData = { hour: string; temp: number; feels: number };
+type Times = { morning: string; evening: string };
 
 type Props = {
   today: HourData[];
   yesterday: HourData[];
   todayColor: string;
+  times: Times;
 };
 
-export default function TempChart({ today, yesterday, todayColor }: Props) {
+export default function TempChart({ today, yesterday, todayColor, times }: Props) {
   const data = today.map((t, i) => ({
     hour: t.hour,
     今日: t.feels,
@@ -52,6 +55,18 @@ export default function TempChart({ today, yesterday, todayColor }: Props) {
           labelFormatter={(label) => `${label}`}
         />
         <Legend />
+        <ReferenceLine
+          x={times.morning}
+          stroke="#9ca3af"
+          strokeDasharray="4 2"
+          label={{ value: "朝", position: "top", fontSize: 11, fill: "#9ca3af" }}
+        />
+        <ReferenceLine
+          x={times.evening}
+          stroke="#9ca3af"
+          strokeDasharray="4 2"
+          label={{ value: "夜", position: "top", fontSize: 11, fill: "#9ca3af" }}
+        />
         <Line
           type="monotone"
           dataKey="昨日"
