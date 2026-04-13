@@ -492,15 +492,19 @@ export default function Page() {
 
         {activeLocation && (
           <div className="mb-5">
-            <p className="text-xs text-gray-400 mb-2">比較する日</p>
             <div className="flex gap-1.5 overflow-x-auto pb-1">
+              <div className="flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-xl text-xs font-medium bg-orange-500 text-white">
+                <span className="font-bold">今日</span>
+                <span className="opacity-75 mt-0.5">{`${today.getMonth() + 1}/${today.getDate()}`}</span>
+              </div>
+              <div className="flex-shrink-0 self-center text-gray-300 text-sm px-0.5">|</div>
               {pastDays.map(({ daysAgo: d, label, date }) => (
                 <button
                   key={d}
                   onClick={() => setCompareDaysAgo(d)}
                   className={`flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-xl text-xs font-medium transition-colors ${
                     compareDaysAgo === d
-                      ? "bg-orange-500 text-white"
+                      ? "bg-orange-100 text-orange-600 border border-orange-300"
                       : "bg-white border border-gray-200 text-gray-600 hover:border-orange-300"
                   }`}
                 >
