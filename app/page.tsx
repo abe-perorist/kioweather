@@ -11,8 +11,145 @@ const TempChart = dynamic(() => import("./components/TempChart"), {
 type HourData = { hour: string; temp: number; feels: number };
 type WeatherData = { today: HourData[]; yesterday: HourData[] };
 type Times = { morning: string; evening: string };
+type Location = { name: string; lat: number; lon: number };
 
 const DEFAULT_TIMES: Times = { morning: "08:00", evening: "19:00" };
+
+function loadLocations(): Location[] {
+  try {
+    const raw = localStorage.getItem("kioweather_locations");
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return [];
+}
+
+function saveLocations(locs: Location[]) {
+  localStorage.setItem("kioweather_locations", JSON.stringify(locs));
+}
+
+function loadActiveLocation(): Location | null {
+  try {
+    const raw = localStorage.getItem("kioweather_active_location");
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
+}
+
+function saveActiveLocation(loc: Location) {
+  localStorage.setItem("kioweather_active_location", JSON.stringify(loc));
+}
+
+type GeoResult = { name: string; admin1?: string; latitude: number; longitude: number };
+
+async function searchLocations(query: string): Promise<GeoResult[]> {
+  const res = await fetch(
+    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=8&language=ja`
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.results ?? [];
+}
+
+function LocationPicker({
+  saved,
+  active,
+  onSelect,
+  onClose,
+}: {
+  saved: Location[];
+  active: Location | null;
+  onSelect: (loc: Location) => void;
+  onClose: () => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<GeoResult[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  const search = async () => {
+    if (!query.trim()) return;
+    setSearching(true);
+    const res = await searchLocations(query.trim());
+    setResults(res);
+    setSearching(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50">
+      <div className="bg-white w-full max-w-xl rounded-t-2xl p-6 max-h-[80vh] flex flex-col">
+        <h2 className="text-lg font-bold text-gray-800 mb-4">場所を選ぶ</h2>
+
+        {/* 検索 */}
+        <p className="text-xs text-gray-400 mb-2">駅名や区名など、大きめのキーワードで検索すると見つかりやすいです</p>
+        <div className="flex gap-2 mb-4">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && search()}
+            placeholder="例: 渋谷、横浜、新宿"
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 outline-none focus:border-orange-400"
+          />
+          <button
+            onClick={search}
+            disabled={searching}
+            className="bg-orange-500 text-white rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
+          >
+            {searching ? "…" : "検索"}
+          </button>
+        </div>
+
+        <div className="overflow-y-auto flex-1">
+          {/* 検索結果 */}
+          {results.length > 0 && (
+            <div className="mb-4">
+              <p className="text-xs text-gray-400 mb-2">検索結果</p>
+              <div className="space-y-1">
+                {results.map((r, i) => {
+                  const loc: Location = { name: r.name + (r.admin1 ? `（${r.admin1}）` : ""), lat: r.latitude, lon: r.longitude };
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => onSelect(loc)}
+                      className="w-full text-left px-4 py-3 rounded-xl hover:bg-orange-50 text-sm text-gray-700"
+                    >
+                      {loc.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 保存済みの場所 */}
+          {saved.length > 0 && (
+            <div>
+              <p className="text-xs text-gray-400 mb-2">保存済みの場所</p>
+              <div className="space-y-1">
+                {saved.map((loc, i) => (
+                  <button
+                    key={i}
+                    onClick={() => onSelect(loc)}
+                    className={`w-full text-left px-4 py-3 rounded-xl text-sm ${active?.name === loc.name ? "bg-orange-50 text-orange-600 font-medium" : "text-gray-700 hover:bg-gray-50"}`}
+                  >
+                    {active?.name === loc.name && <span className="mr-1.5">✓</span>}
+                    {loc.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={onClose}
+          className="mt-4 w-full border border-gray-200 rounded-xl py-2.5 text-sm text-gray-500"
+        >
+          キャンセル
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // 今日が昨日より暖かいかを朝の体感温度で判定
 const TODAY_WARM_COLOR = "#f97316";  // orange-500
@@ -232,31 +369,47 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [times, setTimes] = useState<Times>(DEFAULT_TIMES);
   const [showEditor, setShowEditor] = useState(false);
+  const [activeLocation, setActiveLocation] = useState<Location | null>(null);
+  const [savedLocations, setSavedLocations] = useState<Location[]>([]);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
 
   useEffect(() => {
     setTimes(loadTimes());
+    const locs = loadLocations();
+    setSavedLocations(locs);
+    const active = loadActiveLocation();
+    if (active) {
+      setActiveLocation(active);
+    } else {
+      // 初回: 場所選択を促す
+      setShowLocationPicker(true);
+    }
   }, []);
 
   useEffect(() => {
+    if (!activeLocation) return;
     setLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude: lat, longitude: lon } = pos.coords;
-        const res = await fetch(`/api/weather?lat=${lat}&lon=${lon}`);
-        if (!res.ok) {
-          setError("気象データの取得に失敗しました");
-          setLoading(false);
-          return;
-        }
+    setData(null);
+    setError(null);
+    const { lat, lon } = activeLocation;
+    fetch(`/api/weather?lat=${lat}&lon=${lon}`)
+      .then(async (res) => {
+        if (!res.ok) { setError("気象データの取得に失敗しました"); return; }
         setData(await res.json());
-        setLoading(false);
-      },
-      () => {
-        setError("位置情報を取得できませんでした。ブラウザの許可設定を確認してください。");
-        setLoading(false);
-      }
-    );
-  }, []);
+      })
+      .catch(() => setError("気象データの取得に失敗しました"))
+      .finally(() => setLoading(false));
+  }, [activeLocation]);
+
+  const handleSelectLocation = (loc: Location) => {
+    setActiveLocation(loc);
+    saveActiveLocation(loc);
+    // 保存済みリストに追加（重複除外）
+    const updated = [loc, ...savedLocations.filter((l) => l.name !== loc.name)].slice(0, 10);
+    setSavedLocations(updated);
+    saveLocations(updated);
+    setShowLocationPicker(false);
+  };
 
   const today = new Date();
   const yesterday = new Date(today);
@@ -286,9 +439,30 @@ export default function Page() {
             時間帯を設定
           </button>
         </div>
-        <p className="text-sm text-gray-500 mb-6">
-          今日と昨日の気温を比べて、服を決めよう
-        </p>
+        <div className="flex items-center justify-between mb-6">
+          <p className="text-sm text-gray-500">
+            今日と昨日の気温を比べて、服を決めよう
+          </p>
+          <button
+            onClick={() => setShowLocationPicker(true)}
+            className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+          >
+            <span>📍</span>
+            <span>{activeLocation ? activeLocation.name : "場所を選ぶ"}</span>
+          </button>
+        </div>
+
+        {!activeLocation && !showLocationPicker && (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <p className="text-gray-500 text-sm">場所を選んでスタート</p>
+            <button
+              onClick={() => setShowLocationPicker(true)}
+              className="bg-orange-500 text-white rounded-xl px-6 py-3 text-sm font-medium"
+            >
+              場所を選ぶ
+            </button>
+          </div>
+        )}
 
         {loading && (
           <div className="flex items-center justify-center py-20 text-gray-400">
@@ -339,6 +513,17 @@ export default function Page() {
           times={times}
           onChange={(t) => { setTimes(t); saveTimes(t); }}
           onClose={() => setShowEditor(false)}
+        />
+      )}
+
+      {showLocationPicker && (
+        <LocationPicker
+          saved={savedLocations}
+          active={activeLocation}
+          onSelect={handleSelectLocation}
+          onClose={() => {
+            if (activeLocation) setShowLocationPicker(false);
+          }}
         />
       )}
 
