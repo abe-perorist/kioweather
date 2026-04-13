@@ -32,7 +32,8 @@ type NominatimResult = {
 
 export async function GET(req: NextRequest) {
   const q = new URL(req.url).searchParams.get("q");
-  if (!q) return NextResponse.json({ error: "q required" }, { status: 400 });
+  if (!q || q.trim().length === 0) return NextResponse.json({ error: "q required" }, { status: 400 });
+  if (q.length > 200) return NextResponse.json({ error: "q too long" }, { status: 400 });
 
   const url =
     `https://nominatim.openstreetmap.org/search` +

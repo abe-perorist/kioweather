@@ -2,13 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const lat = searchParams.get("lat");
-  const lon = searchParams.get("lon");
-  const daysAgo = Math.min(7, Math.max(1, parseInt(searchParams.get("daysAgo") ?? "1", 10)));
+  const latRaw = searchParams.get("lat");
+  const lonRaw = searchParams.get("lon");
+  const daysAgoRaw = parseInt(searchParams.get("daysAgo") ?? "1", 10);
 
-  if (!lat || !lon) {
+  if (!latRaw || !lonRaw) {
     return NextResponse.json({ error: "lat/lon required" }, { status: 400 });
   }
+
+  const lat = parseFloat(latRaw);
+  const lon = parseFloat(lonRaw);
+
+  if (isNaN(lat) || lat < -90 || lat > 90) {
+    return NextResponse.json({ error: "Invalid lat" }, { status: 400 });
+  }
+  if (isNaN(lon) || lon < -180 || lon > 180) {
+    return NextResponse.json({ error: "Invalid lon" }, { status: 400 });
+  }
+
+  const daysAgo = isNaN(daysAgoRaw) ? 1 : Math.min(7, Math.max(1, daysAgoRaw));
 
   const today = new Date();
   const compareDate = new Date(today);
