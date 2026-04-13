@@ -431,9 +431,9 @@ export default function Page() {
     return { daysAgo: i + 1, label: DOW[d.getDay()], date: `${d.getMonth() + 1}/${d.getDate()}` };
   });
 
-  const compareLabel = data
-    ? compareDaysAgo === 1 ? "昨日" : `${DOW[new Date(data.compareDate).getDay()]}曜`
-    : "昨日";
+  const compareDate = new Date(today);
+  compareDate.setDate(today.getDate() - compareDaysAgo);
+  const compareLabel = compareDaysAgo === 1 ? "昨日" : `${DOW[compareDate.getDay()]}曜`;
 
   // 朝の体感温度差で今日のテーマカラーを決定
   const morningDiff = data
@@ -459,7 +459,7 @@ export default function Page() {
         </div>
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-gray-500">
-            今日と昨日の気温を比べて、服を決めよう
+            今日と{compareLabel}の気温を比べて、服を決めよう
           </p>
           <button
             onClick={() => setShowLocationPicker(true)}
