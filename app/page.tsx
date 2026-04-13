@@ -64,7 +64,7 @@ function LocationPicker({
   const [searching, setSearching] = useState(false);
 
   const search = async () => {
-    if (!query.trim()) return;
+    if (searching || !query.trim()) return;
     setSearching(true);
     const res = await searchLocations(query.trim());
     setResults(res);
