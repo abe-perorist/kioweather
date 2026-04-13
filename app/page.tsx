@@ -79,13 +79,14 @@ function LocationPicker({
         <h2 className="text-lg font-bold text-gray-800 mb-4">場所を選ぶ</h2>
 
         {/* 検索 */}
+        <p className="text-xs text-gray-400 mb-2">駅名や区名など、大きめのキーワードで検索すると見つかりやすいです</p>
         <div className="flex gap-2 mb-4">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && search()}
-            placeholder="例: 原宿、横浜、大倉山"
+            placeholder="例: 渋谷、横浜、新宿"
             className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 outline-none focus:border-orange-400"
           />
           <button
