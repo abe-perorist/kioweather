@@ -39,12 +39,10 @@ function saveActiveLocation(loc: Location) {
   localStorage.setItem("kioweather_active_location", JSON.stringify(loc));
 }
 
-type GeoResult = { name: string; admin1?: string; latitude: number; longitude: number };
+type GeoResult = { name: string; lat: number; lon: number };
 
 async function searchLocations(query: string): Promise<GeoResult[]> {
-  const res = await fetch(
-    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=8&language=ja`
-  );
+  const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
   if (!res.ok) return [];
   const data = await res.json();
   return data.results ?? [];
@@ -104,18 +102,15 @@ function LocationPicker({
             <div className="mb-4">
               <p className="text-xs text-gray-400 mb-2">検索結果</p>
               <div className="space-y-1">
-                {results.map((r, i) => {
-                  const loc: Location = { name: r.name + (r.admin1 ? `（${r.admin1}）` : ""), lat: r.latitude, lon: r.longitude };
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => onSelect(loc)}
-                      className="w-full text-left px-4 py-3 rounded-xl hover:bg-orange-50 text-sm text-gray-700"
-                    >
-                      {loc.name}
-                    </button>
-                  );
-                })}
+                {results.map((r, i) => (
+                  <button
+                    key={i}
+                    onClick={() => onSelect({ name: r.name, lat: r.lat, lon: r.lon })}
+                    className="w-full text-left px-4 py-3 rounded-xl hover:bg-orange-50 text-sm text-gray-700"
+                  >
+                    {r.name}
+                  </button>
+                ))}
               </div>
             </div>
           )}
