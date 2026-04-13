@@ -184,11 +184,13 @@ function MorningCard({
   today,
   yesterday,
   todayColor,
+  compareLabel,
 }: {
   times: Times;
   today: HourData[];
   yesterday: HourData[];
   todayColor: string;
+  compareLabel: string;
 }) {
   const todayTemp = getTempAt(today, times.morning);
   const yestTemp = getTempAt(yesterday, times.morning);
@@ -200,15 +202,15 @@ function MorningCard({
   let advice: string;
 
   if (diff <= -5) {
-    advice = "昨日よりかなり寒い。しっかり厚着を";
+    advice = `${compareLabel}よりかなり寒い。しっかり厚着を`;
   } else if (diff <= -2) {
-    advice = "昨日より寒い。1枚追加して";
+    advice = `${compareLabel}より寒い。1枚追加して`;
   } else if (diff >= 5) {
-    advice = "昨日よりかなり暖かい。薄めでOK";
+    advice = `${compareLabel}よりかなり暖かい。薄めでOK`;
   } else if (diff >= 2) {
-    advice = "昨日より暖かい。少し薄めでもいいかも";
+    advice = `${compareLabel}より暖かい。少し薄めでもいいかも`;
   } else {
-    advice = "昨日とほぼ同じ。昨日の服装でOK";
+    advice = `${compareLabel}とほぼ同じ。${compareLabel}の服装でOK`;
   }
 
   return (
@@ -224,7 +226,7 @@ function MorningCard({
         </div>
         <div className="pb-1 text-gray-200 text-2xl">/</div>
         <div>
-          <p className="text-xs text-gray-400 mb-1">昨日</p>
+          <p className="text-xs text-gray-400 mb-1">{compareLabel}</p>
           <p className="text-3xl font-bold text-slate-300">{yestTemp}°</p>
         </div>
         <p className={`pb-1 text-base font-semibold ${diff < 0 ? "text-blue-500" : diff > 0 ? "text-orange-500" : "text-gray-400"}`}>
@@ -243,11 +245,13 @@ function EveningCard({
   today,
   yesterday,
   todayColor,
+  compareLabel,
 }: {
   times: Times;
   today: HourData[];
   yesterday: HourData[];
   todayColor: string;
+  compareLabel: string;
 }) {
   const todayTemp = getTempAt(today, times.evening);
   const yestTemp = getTempAt(yesterday, times.evening);
@@ -259,15 +263,15 @@ function EveningCard({
   let advice: string;
 
   if (diff <= -5) {
-    advice = "昨日の夜よりかなり寒い。しっかり厚着を";
+    advice = `${compareLabel}の夜よりかなり寒い。しっかり厚着を`;
   } else if (diff <= -2) {
-    advice = "昨日の夜より寒い。1枚追加して";
+    advice = `${compareLabel}の夜より寒い。1枚追加して`;
   } else if (diff >= 5) {
-    advice = "昨日の夜よりかなり暖かい。薄めでOK";
+    advice = `${compareLabel}の夜よりかなり暖かい。薄めでOK`;
   } else if (diff >= 2) {
-    advice = "昨日の夜より暖かい。少し薄めでもいいかも";
+    advice = `${compareLabel}の夜より暖かい。少し薄めでもいいかも`;
   } else {
-    advice = "昨日の夜とほぼ同じ。昨日の服装でOK";
+    advice = `${compareLabel}の夜とほぼ同じ。${compareLabel}の服装でOK`;
   }
 
   return (
@@ -283,7 +287,7 @@ function EveningCard({
         </div>
         <div className="pb-1 text-gray-200 text-2xl">/</div>
         <div>
-          <p className="text-xs text-gray-400 mb-1">昨日</p>
+          <p className="text-xs text-gray-400 mb-1">{compareLabel}</p>
           <p className="text-3xl font-bold text-slate-300">{yestTemp}°</p>
         </div>
         <p className={`pb-1 text-base font-semibold ${diff < 0 ? "text-blue-500" : diff > 0 ? "text-orange-500" : "text-gray-400"}`}>
@@ -427,6 +431,10 @@ export default function Page() {
     return { daysAgo: i + 1, label: DOW[d.getDay()], date: `${d.getMonth() + 1}/${d.getDate()}` };
   });
 
+  const compareLabel = data
+    ? compareDaysAgo === 1 ? "昨日" : `${DOW[new Date(data.compareDate).getDay()]}曜`
+    : "昨日";
+
   // 朝の体感温度差で今日のテーマカラーを決定
   const morningDiff = data
     ? (() => {
@@ -519,8 +527,8 @@ export default function Page() {
         {data && (
           <>
             <div className="space-y-3 mb-6">
-              <MorningCard times={times} today={data.today} yesterday={data.yesterday} todayColor={todayColor} />
-              <EveningCard times={times} today={data.today} yesterday={data.yesterday} todayColor={todayColor} />
+              <MorningCard times={times} today={data.today} yesterday={data.yesterday} todayColor={todayColor} compareLabel={compareLabel} />
+              <EveningCard times={times} today={data.today} yesterday={data.yesterday} todayColor={todayColor} compareLabel={compareLabel} />
             </div>
 
             <div className="flex items-center gap-4 mb-3 text-sm text-gray-500">
