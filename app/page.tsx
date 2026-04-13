@@ -9,7 +9,7 @@ const TempChart = dynamic(() => import("./components/TempChart"), {
 });
 
 type HourData = { hour: string; temp: number; feels: number };
-type WeatherData = { today: HourData[]; yesterday: HourData[] };
+type WeatherData = { today: HourData[]; yesterday: HourData[]; compareDate: string };
 type Times = { morning: string; evening: string };
 type Location = { name: string; lat: number; lon: number };
 
@@ -372,6 +372,7 @@ export default function Page() {
   const [activeLocation, setActiveLocation] = useState<Location | null>(null);
   const [savedLocations, setSavedLocations] = useState<Location[]>([]);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [compareDaysAgo, setCompareDaysAgo] = useState(1);
 
   useEffect(() => {
     setTimes(loadTimes());
@@ -392,14 +393,14 @@ export default function Page() {
     setData(null);
     setError(null);
     const { lat, lon } = activeLocation;
-    fetch(`/api/weather?lat=${lat}&lon=${lon}`)
+    fetch(`/api/weather?lat=${lat}&lon=${lon}&daysAgo=${compareDaysAgo}`)
       .then(async (res) => {
         if (!res.ok) { setError("気象データの取得に失敗しました"); return; }
         setData(await res.json());
       })
       .catch(() => setError("気象データの取得に失敗しました"))
       .finally(() => setLoading(false));
-  }, [activeLocation]);
+  }, [activeLocation, compareDaysAgo]);
 
   const handleSelectLocation = (loc: Location) => {
     setActiveLocation(loc);
@@ -412,10 +413,19 @@ export default function Page() {
   };
 
   const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-  const fmt = (d: Date) =>
-    `${d.getMonth() + 1}/${d.getDate()}(${["日", "月", "火", "水", "木", "金", "土"][d.getDay()]})`;
+  const DOW = ["日", "月", "火", "水", "木", "金", "土"];
+  const fmt = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}(${DOW[d.getDay()]})`;
+  const fmtCompare = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return `${d.getMonth() + 1}/${d.getDate()}(${DOW[d.getDay()]})`;
+  };
+
+  // 過去7日分のボタンデータ
+  const pastDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - (i + 1));
+    return { daysAgo: i + 1, label: DOW[d.getDay()], date: `${d.getMonth() + 1}/${d.getDate()}` };
+  });
 
   // 朝の体感温度差で今日のテーマカラーを決定
   const morningDiff = data
@@ -480,6 +490,28 @@ export default function Page() {
           </div>
         )}
 
+        {activeLocation && (
+          <div className="mb-5">
+            <p className="text-xs text-gray-400 mb-2">比較する日</p>
+            <div className="flex gap-1.5 overflow-x-auto pb-1">
+              {pastDays.map(({ daysAgo: d, label, date }) => (
+                <button
+                  key={d}
+                  onClick={() => setCompareDaysAgo(d)}
+                  className={`flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-xl text-xs font-medium transition-colors ${
+                    compareDaysAgo === d
+                      ? "bg-orange-500 text-white"
+                      : "bg-white border border-gray-200 text-gray-600 hover:border-orange-300"
+                  }`}
+                >
+                  <span className="font-bold">{label}</span>
+                  <span className="opacity-75 mt-0.5">{date}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {data && (
           <>
             <div className="space-y-3 mb-6">
@@ -494,7 +526,7 @@ export default function Page() {
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="inline-block w-4 h-0.5 bg-slate-400 rounded" />
-                昨日 {fmt(yesterday)}
+                {fmtCompare(data.compareDate)}
               </span>
             </div>
 
