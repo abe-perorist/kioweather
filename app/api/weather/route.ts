@@ -22,9 +22,11 @@ export async function GET(req: NextRequest) {
 
   const daysAgo = isNaN(daysAgoRaw) ? 1 : Math.min(7, Math.max(1, daysAgoRaw));
 
-  const today = new Date();
-  const compareDate = new Date(today);
-  compareDate.setDate(today.getDate() - daysAgo);
+  // open-meteo は timezone=Asia/Tokyo のとき JST タイムスタンプを返すので、
+  // 日付計算も JST で行う（UTC+9 = +9*60*60*1000ms）
+  const nowJST = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  const compareDate = new Date(nowJST);
+  compareDate.setDate(nowJST.getDate() - daysAgo);
 
   const fmt = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -43,7 +45,7 @@ export async function GET(req: NextRequest) {
 
   const data = await res.json();
 
-  const todayStr = fmt(today);
+  const todayStr = fmt(nowJST);
   const compareDateStr = fmt(compareDate);
 
   const hours = data.hourly.time as string[];
